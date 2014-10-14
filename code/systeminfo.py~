@@ -1,0 +1,82 @@
+import subprocess
+import os
+
+class SystemInfo(object):
+    def __init__(self, **keywords):
+        self._name = keywords.get('name','SystemInfo')
+
+    def get_ram(self):
+        """Returns info about ram in a list ordered (total ram, available ramm, free ram) in megabytes. See www.linuxatemyram.com"""
+        try:
+            s = subprocess.check_output(["free","-m"])
+            lines = s.split()       
+            v = [int(lines[7]),int(lines[8]),int(lines[9])]
+            return v
+        except:
+            return False
+
+    def get_process_count(self): 
+        """Returns the number of processes, there is running on the system."""
+        try:
+            s = subprocess.check_output(["ps","-e"])
+            return len(s.split())       
+        except:
+            return False
+
+    def get_up_stats(self):
+        """Returns a list in ordered[Current time hh:mm:ss, uptime [mins], Users[int], loadaverage 1 min, 5min, 15 min] (uptime, 5 min load average)"""
+        try:
+            s = subprocess.check_output(["uptime"])
+            print(s)
+            l = s.split()
+            print(l)
+
+            print(l[0].decode(encoding="utf-8"))
+            for i in range (0,len(l)):
+                l[i] = (l[i].decode(encoding="utf-8"))
+            print((l[2]))
+            r = [(l[0]),int(l[2]),int(l[4].replace(",","")), ((l[8]).replace(",","")) ]
+            
+            return r       
+        except:
+            return ('"' , 0 )
+
+def get_connections():
+    """Returns the number of network connections"""
+    try:
+        s = subprocess.check_output(["netstat","-tun"])
+        return len([x for x in s.split() if x == 'ESTABLISHED'])
+    except:
+        return 0
+
+def get_temperature():
+    """Returns the temperature in degrees C"""
+    try:
+        s = subprocess.check_output(["/opt/vc/bin/vcgencmd","measure_temp"])
+        return float(s.split('=')[1][:-3])
+    except:
+        return 0
+
+def get_ipaddress():
+    """Returns the current IP address"""
+    arg='ip route list'
+    p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
+    data = p.communicate()
+    split_data = data[0].split()
+    ipaddr = split_data[split_data.index('src')+1]
+    return ipaddr
+
+def get_cpu_speed():
+    """Returns the current CPU speed"""
+    f = os.popen('/opt/vc/bin/vcgencmd get_config arm_freq')
+    cpu = f.read()
+    return cpu
+"""
+print Free RAM: ‘+str(get_ram()[1])+’ (‘+str(get_ram()[0])+’)’
+print ‘Nr. of processes: ‘+str(get_process_count())
+print ‘Up time: ‘+get_up_stats()[0]
+print ‘Nr. of connections: ‘+str(get_connections())
+print ‘Temperature in C: ‘ +str(get_temperature())
+print ‘IP-address: ‘+get_ipaddress()
+print ‘CPU speed: ‘+str(get_cpu_speed())
+"""
